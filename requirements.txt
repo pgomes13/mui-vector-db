@@ -1,0 +1,13 @@
+# Scraping
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# Embeddings
+sentence-transformers==3.3.1
+
+# Vector index
+faiss-cpu==1.9.0
+
+# Utilities
+tqdm==4.67.1
