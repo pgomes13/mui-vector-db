@@ -6,6 +6,7 @@ PY         := $(VENV)/bin/python
 INDEX_DIR  := index
 RAW_DIR    := data/raw
 PROC_DIR   := data/processed
+OLLAMA_MODEL ?= qwen2.5-coder:7b
 
 .DEFAULT_GOAL := help
 
@@ -78,6 +79,32 @@ clean: ## Remove venv (keeps scraped data and index)
 
 .PHONY: clean-all
 clean-all: clean clean-data ## Remove everything generated
+
+# ── Agent ─────────────────────────────────────────────────────────────────────
+
+.PHONY: review
+review: ## Review a PR: make review REPO=owner/repo PR=42
+ifndef REPO
+	$(error REPO is required — usage: make review REPO=owner/repo PR=42)
+endif
+ifndef PR
+	$(error PR is required — usage: make review REPO=owner/repo PR=42)
+endif
+	OLLAMA_MODEL=$(OLLAMA_MODEL) $(PY) -m agent.pipeline --repo "$(REPO)" --pr $(PR) --index-dir $(INDEX_DIR)
+
+.PHONY: review-dry
+review-dry: ## Dry-run review (prints comment, does not post): make review-dry REPO=owner/repo PR=42
+ifndef REPO
+	$(error REPO is required — usage: make review-dry REPO=owner/repo PR=42)
+endif
+ifndef PR
+	$(error PR is required — usage: make review-dry REPO=owner/repo PR=42)
+endif
+	OLLAMA_MODEL=$(OLLAMA_MODEL) $(PY) -m agent.pipeline --repo "$(REPO)" --pr $(PR) --index-dir $(INDEX_DIR) --dry-run
+
+.PHONY: ollama-pull
+ollama-pull: ## Pull the default Ollama model (qwen2.5-coder:7b)
+	ollama pull $(OLLAMA_MODEL)
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
 

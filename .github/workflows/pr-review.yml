@@ -1,0 +1,78 @@
+name: MUI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**/*.tsx"
+      - "**/*.jsx"
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  mui-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Checkout MUI vector DB
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/mui-vector-db
+          path: mui-vector-db
+          # For private repos add: token: ${{ secrets.MUI_DB_TOKEN }}
+
+      - name: Cache MUI FAISS index
+        uses: actions/cache@v4
+        with:
+          path: mui-vector-db/index
+          key: mui-index-v1
+
+      - name: Cache HuggingFace model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub
+          key: hf-all-minilm-l6-v2
+
+      - name: Cache Ollama model
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ollama-qwen2.5-coder-7b
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: mui-vector-db
+        run: pip install -r requirements.txt
+
+      - name: Install and start Ollama
+        run: |
+          curl -fsSL https://ollama.ai/install.sh | sh
+          ollama serve &
+          # Wait for the server to be ready
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:11434/api/tags && break
+            sleep 2
+          done
+
+      - name: Pull Ollama model
+        run: ollama pull ${OLLAMA_MODEL:-qwen2.5-coder:7b}
+
+      - name: Run MUI review agent
+        working-directory: mui-vector-db
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OLLAMA_MODEL: qwen2.5-coder:7b
+        run: |
+          python -m agent.pipeline \
+            --repo "${{ github.repository }}" \
+            --pr "${{ github.event.number }}" \
+            --index-dir index/
