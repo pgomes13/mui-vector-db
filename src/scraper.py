@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Optional
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -219,7 +219,7 @@ def build_urls() -> list[tuple[str, str]]:
     """Return list of (url, slug) pairs to scrape."""
     urls = []
     for path in SECTIONS + COMPONENT_PATHS:
-        url = urljoin(MATERIAL_UI_BASE, path)
+        url = MATERIAL_UI_BASE + path
         slug = path.strip("/").replace("/", "_")
         urls.append((url, slug))
     return urls

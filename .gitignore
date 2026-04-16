@@ -5,10 +5,11 @@ __pycache__/
 .venv/
 venv/
 
-# Large generated artefacts — not committed
+# Raw scrape cache — not committed
 data/raw/
-data/processed/
-index/
+
+# Embedding cache — regenerated from index
+data/processed/embeddings.npy
 
 # Model cache
 ~/.cache/huggingface/
